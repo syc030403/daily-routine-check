@@ -1,0 +1,15 @@
+{
+  "name": "데일리 루틴",
+  "short_name": "루틴",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#14150f",
+  "theme_color": "#2e7d32",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+<!-- 의도: 홈 화면 아이콘용 단순 체크마크. 복잡한 그림 대신 한눈에 알아볼 수 있게 최소한으로 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#2e7d32"/>
+  <path d="M140 270 L220 350 L380 160" fill="none" stroke="#ffffff" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
