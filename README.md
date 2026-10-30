@@ -41,16 +41,6 @@ python3 -m http.server 8000
 - **iPhone(Safari)**: 사이트 접속 → 공유 버튼 → "홈 화면에 추가"
 - **Android(Chrome)**: 사이트 접속 → 메뉴(⋮) → "홈 화면에 추가"
 
-## 배포 반영 방법
-
-파일 수정 후 main 브랜치에 push하면 1분 내로 자동 반영됩니다.
-
-```bash
-git add .
-git commit -m "변경 내용"
-git push
-```
-
 ## 데이터 관련 참고
 
 체크 기록과 메모는 서버가 아니라 **각자의 브라우저(localStorage)에만** 저장됩니다.
