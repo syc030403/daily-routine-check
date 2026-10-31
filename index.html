@@ -64,19 +64,44 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin-bottom: 10px;
+    margin-bottom: 24px;
   }
   .check-item {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    min-height: 48px;
-    padding: 10px 14px;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px 8px 10px 14px;
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 10px;
+  }
+  .check-main {
+    display: flex;
+    align-items: center;
+  }
+  .check-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-height: 44px;
     cursor: pointer;
     user-select: none;
+  }
+  /* 세부 목표: 체크박스 너비만큼 들여써서 루틴 이름 아래에 붙임 */
+  .goal-input {
+    margin-left: 34px;
+    margin-right: 6px;
+    padding: 8px 10px;
+    font-size: 14px;
+    background: transparent;
+    color: var(--sub-text);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+  }
+  .goal-input::placeholder {
+    color: var(--sub-text);
+    opacity: 0.7;
   }
   .check-item.done {
     background: var(--done-bg);
@@ -114,7 +139,7 @@
   .add-item-row {
     display: flex;
     gap: 8px;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
   }
   .add-item-row input {
     flex: 1;
@@ -190,11 +215,11 @@
 <body>
 <div class="wrap">
   <div class="today-date" id="todayDate"></div>
-  <div class="checklist" id="checklist"></div>
   <form class="add-item-row" id="addItemForm">
     <input type="text" id="newItemInput" placeholder="새 루틴 항목 추가">
     <button type="submit">추가</button>
   </form>
+  <div class="checklist" id="checklist"></div>
   <div class="memo-box">
     <input type="text" id="memoInput" placeholder="오늘 기억나는 문장">
   </div>
@@ -223,15 +248,17 @@ function getWeekdayLabel(dateKey) {
 
 // localStorage 읽기/쓰기: 개인용 로컬 저장이 목적이라 서버/동기화 없이 이것만으로 충분.
 // 시크릿 모드 등에서 저장이 막혀도 앱이 죽지 않도록 try/catch로 감쌈.
-// items(항목 목록)와 날짜별 기록을 한 객체에 같이 담아서 키 하나로 관리
+// items(항목 목록), goals(루틴별 세부 목표), 날짜별 기록을 한 객체에 같이 담아서 키 하나로 관리.
+// goals를 items와 따로 둔 이유: 기존에 저장된 items(문자열 배열) 형식을 안 깨고 그대로 쓰기 위해
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     const parsed = raw ? JSON.parse(raw) : {};
     if (!Array.isArray(parsed.items)) parsed.items = [];
+    if (!parsed.goals || typeof parsed.goals !== "object") parsed.goals = {};
     return parsed;
   } catch (e) {
-    return { items: [] };
+    return { items: [], goals: {} };
   }
 }
 
@@ -272,7 +299,7 @@ function renderChecklist() {
   checklistEl.innerHTML = "";
 
   if (data.items.length === 0) {
-    checklistEl.innerHTML = '<div class="checklist-empty">아래에서 루틴 항목을 추가해보세요</div>';
+    checklistEl.innerHTML = '<div class="checklist-empty">위에서 루틴 항목을 추가해보세요</div>';
     return;
   }
 
@@ -281,12 +308,11 @@ function renderChecklist() {
     const row = document.createElement("div");
     row.className = "check-item" + (checked ? " done" : "");
 
+    const main = document.createElement("div");
+    main.className = "check-main";
+
     const label = document.createElement("label");
-    label.style.display = "flex";
-    label.style.alignItems = "center";
-    label.style.gap = "12px";
-    label.style.flex = "1";
-    label.style.cursor = "pointer";
+    label.className = "check-label";
 
     const input = document.createElement("input");
     input.type = "checkbox";
@@ -311,15 +337,34 @@ function renderChecklist() {
     deleteBtn.setAttribute("aria-label", item + " 삭제");
     deleteBtn.addEventListener("click", () => {
       data.items = data.items.filter((i) => i !== item);
+      delete data.goals[item];
       saveData(data);
       renderChecklist();
     });
 
-    row.appendChild(label);
-    row.appendChild(deleteBtn);
+    // 세부 목표: 매일 바뀌는 내용(예: day04 → day05)이라 루틴 이름과 별도로 바로 고칠 수 있게 함.
+    // 메모리 값은 즉시 갱신하고 저장만 디바운스 → 체크로 다시 그려져도 입력 내용이 안 날아감
+    const goalInput = document.createElement("input");
+    goalInput.type = "text";
+    goalInput.className = "goal-input";
+    goalInput.placeholder = "세부 목표 (예: day04 공부하기)";
+    goalInput.value = data.goals[item] || "";
+    goalInput.setAttribute("aria-label", item + " 세부 목표");
+    goalInput.addEventListener("input", () => {
+      data.goals[item] = goalInput.value;
+      clearTimeout(goalTimer);
+      goalTimer = setTimeout(() => saveData(data), 400);
+    });
+
+    main.appendChild(label);
+    main.appendChild(deleteBtn);
+    row.appendChild(main);
+    row.appendChild(goalInput);
     checklistEl.appendChild(row);
   });
 }
+
+let goalTimer = null;
 
 renderChecklist();
 
@@ -354,11 +399,11 @@ memoInput.addEventListener("input", () => {
   }, 400);
 });
 
-// 지난 기록 (오늘 제외, 최근 날짜부터). "items"는 날짜 키가 아니므로 제외
+// 지난 기록 (오늘 제외, 최근 날짜부터). items/goals 같은 날짜가 아닌 키는 제외
 function renderHistory() {
   const historyEl = document.getElementById("historyList");
   const dates = Object.keys(data)
-    .filter((key) => key !== "items" && key !== todayKey)
+    .filter((key) => /^\d{4}-\d{2}-\d{2}$/.test(key) && key !== todayKey)
     .sort((a, b) => (a < b ? 1 : -1));
 
   if (dates.length === 0) {
