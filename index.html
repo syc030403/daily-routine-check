@@ -211,11 +211,7 @@
     margin-bottom: 24px;
   }
   .check-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-height: 48px;
-    padding: 0 8px 0 14px;
+    padding: 0 8px 10px 14px;
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 10px;
@@ -224,8 +220,51 @@
     background: var(--done-bg);
     opacity: 0.6;
   }
-  .check-item.done .label {
+  .check-main,
+  .sub-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .check-item.done .check-main .label,
+  .sub-item.done .label {
     text-decoration: line-through;
+  }
+  .sub-item.done .label {
+    color: var(--sub-text);
+  }
+  /* 세부 루틴: 체크박스 너비만큼 들여써서 루틴 아래에 붙임 */
+  .sub-list {
+    margin-left: 34px;
+  }
+  .sub-add {
+    display: flex;
+    gap: 8px;
+    margin-right: 6px;
+  }
+  .sub-add input {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+    padding: 8px 10px;
+    font-size: 16px;
+    background: transparent;
+    color: var(--text);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+  }
+  .sub-add input::placeholder {
+    color: var(--sub-text);
+  }
+  .sub-add button {
+    width: 44px;
+    min-height: 44px;
+    flex-shrink: 0;
+    font-size: 20px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
   }
   .check-label {
     display: flex;
@@ -321,15 +360,16 @@ function getWeekdayLabel(dateKey) {
 
 // localStorage 읽기/쓰기: 개인용 로컬 저장이 목적이라 서버/동기화 없이 이것만으로 충분.
 // 시크릿 모드 등에서 저장이 막혀도 앱이 죽지 않도록 try/catch로 감쌈.
-// items(기본 루틴)와 날짜별 기록을 한 객체에 같이 담아서 키 하나로 관리
+// items(기본 루틴), subItems(기본 세부 루틴), 날짜별 기록을 한 객체에 같이 담아서 키 하나로 관리
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     const parsed = raw ? JSON.parse(raw) : {};
     if (!Array.isArray(parsed.items)) parsed.items = [];
+    if (!parsed.subItems) parsed.subItems = {};
     return parsed;
   } catch (e) {
-    return { items: [] };
+    return { items: [], subItems: {} };
   }
 }
 
@@ -355,15 +395,26 @@ if ("goals" in data) {
 function getEntry(dateKey) {
   if (!data[dateKey]) {
     const checks = {};
-    data.items.forEach((item) => { checks[item] = false; });
-    data[dateKey] = { checks: checks, memo: "" };
+    const subs = {};
+    data.items.forEach((item) => {
+      checks[item] = false;
+      subs[item] = {};
+      (data.subItems[item] || []).forEach((sub) => { subs[item][sub] = false; });
+    });
+    data[dateKey] = { checks: checks, subs: subs, memo: "" };
   }
   if (!data[dateKey].checks) data[dateKey].checks = {};
+  if (!data[dateKey].subs) data[dateKey].subs = {};
   return data[dateKey];
 }
 
 function getRoutines(dateKey) {
   return data[dateKey] ? Object.keys(data[dateKey].checks || {}) : data.items;
+}
+
+function getSubs(dateKey, item) {
+  if (!data[dateKey]) return data.subItems[item] || [];
+  return Object.keys((data[dateKey].subs || {})[item] || {});
 }
 
 // 오늘 기록을 미리 만들어 둬야 달력의 완료 개수가 그날 기준으로 정확함
@@ -482,10 +533,13 @@ function renderDayView(root, dateKey) {
     empty.textContent = "위에서 루틴 항목을 추가해보세요";
     list.appendChild(empty);
   }
-  routines.forEach((item) => {
+  routines.forEach((item, routineIndex) => {
     const checked = !!(data[dateKey] && data[dateKey].checks[item]);
     const row = document.createElement("div");
     row.className = "check-item" + (checked ? " done" : "");
+
+    const main = document.createElement("div");
+    main.className = "check-main";
 
     const label = document.createElement("label");
     label.className = "check-label";
@@ -508,13 +562,91 @@ function renderDayView(root, dateKey) {
     deleteBtn.textContent = "×";
     deleteBtn.setAttribute("aria-label", item + " 삭제");
     deleteBtn.addEventListener("click", () => {
-      delete getEntry(dateKey).checks[item];
-      if (dateKey === todayKey) data.items = data.items.filter((i) => i !== item);
+      const entry = getEntry(dateKey);
+      delete entry.checks[item];
+      delete entry.subs[item];
+      if (dateKey === todayKey) {
+        data.items = data.items.filter((i) => i !== item);
+        delete data.subItems[item];
+      }
       refresh();
     });
 
-    row.appendChild(label);
-    row.appendChild(deleteBtn);
+    main.appendChild(label);
+    main.appendChild(deleteBtn);
+    row.appendChild(main);
+
+    // 세부 루틴: 루틴과 같은 규칙으로 오늘 화면에서 고친 내용만 다음 날로 이어짐
+    const subList = document.createElement("div");
+    subList.className = "sub-list";
+    getSubs(dateKey, item).forEach((sub) => {
+      const subChecked = !!(data[dateKey] && data[dateKey].subs && data[dateKey].subs[item][sub]);
+      const subRow = document.createElement("div");
+      subRow.className = "sub-item" + (subChecked ? " done" : "");
+
+      const subLabel = document.createElement("label");
+      subLabel.className = "check-label";
+      const subInput = document.createElement("input");
+      subInput.type = "checkbox";
+      subInput.checked = subChecked;
+      subInput.addEventListener("change", () => {
+        getEntry(dateKey).subs[item][sub] = subInput.checked;
+        refresh();
+      });
+      const subSpan = document.createElement("span");
+      subSpan.className = "label";
+      subSpan.textContent = sub;
+      subLabel.appendChild(subInput);
+      subLabel.appendChild(subSpan);
+
+      const subDeleteBtn = document.createElement("button");
+      subDeleteBtn.type = "button";
+      subDeleteBtn.className = "delete-btn";
+      subDeleteBtn.textContent = "×";
+      subDeleteBtn.setAttribute("aria-label", sub + " 삭제");
+      subDeleteBtn.addEventListener("click", () => {
+        delete getEntry(dateKey).subs[item][sub];
+        if (dateKey === todayKey && data.subItems[item]) {
+          data.subItems[item] = data.subItems[item].filter((s) => s !== sub);
+        }
+        refresh();
+      });
+
+      subRow.appendChild(subLabel);
+      subRow.appendChild(subDeleteBtn);
+      subList.appendChild(subRow);
+    });
+
+    const subForm = document.createElement("form");
+    subForm.className = "sub-add";
+    const newSubInput = document.createElement("input");
+    newSubInput.type = "text";
+    newSubInput.placeholder = "세부 루틴 추가";
+    newSubInput.setAttribute("aria-label", item + " 세부 루틴 추가");
+    const subAddBtn = document.createElement("button");
+    subAddBtn.type = "submit";
+    subAddBtn.textContent = "+";
+    subAddBtn.setAttribute("aria-label", item + "에 세부 루틴 추가");
+    subForm.appendChild(newSubInput);
+    subForm.appendChild(subAddBtn);
+    subForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = newSubInput.value.trim();
+      newSubInput.value = "";
+      if (!name || getSubs(dateKey, item).includes(name)) return;
+      const entry = getEntry(dateKey);
+      if (!entry.subs[item]) entry.subs[item] = {};
+      entry.subs[item][name] = false;
+      if (dateKey === todayKey && data.items.includes(item)) {
+        if (!data.subItems[item]) data.subItems[item] = [];
+        data.subItems[item].push(name);
+      }
+      refresh();
+      root.querySelectorAll(".sub-add input")[routineIndex].focus();
+    });
+    subList.appendChild(subForm);
+
+    row.appendChild(subList);
     list.appendChild(row);
   });
   root.appendChild(list);
