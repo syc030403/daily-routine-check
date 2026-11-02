@@ -354,11 +354,11 @@ memoInput.addEventListener("input", () => {
   }, 400);
 });
 
-// 지난 기록 (오늘 제외, 최근 날짜부터). "items"는 날짜 키가 아니므로 제외
+// 지난 기록 (오늘 제외, 최근 날짜부터). 날짜 형식인 키만 기록으로 취급 (items, goals 등 제외)
 function renderHistory() {
   const historyEl = document.getElementById("historyList");
   const dates = Object.keys(data)
-    .filter((key) => key !== "items" && key !== todayKey)
+    .filter((key) => /^\d{4}-\d{2}-\d{2}$/.test(key) && key !== todayKey)
     .sort((a, b) => (a < b ? 1 : -1));
 
   if (dates.length === 0) {
