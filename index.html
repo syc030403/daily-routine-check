@@ -211,7 +211,7 @@
     margin-bottom: 24px;
   }
   .check-item {
-    padding: 0 8px 10px 14px;
+    padding: 0 8px 0 14px;
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 10px;
@@ -236,6 +236,19 @@
   /* 세부 루틴: 체크박스 너비만큼 들여써서 루틴 아래에 붙임 */
   .sub-list {
     margin-left: 34px;
+    padding-bottom: 10px;
+  }
+  .sub-toggle {
+    min-width: 44px;
+    min-height: 44px;
+    flex-shrink: 0;
+    padding: 0 4px;
+    font-size: 16px;
+    color: var(--sub-text);
+    background: none;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
   }
   .sub-add {
     display: flex;
@@ -273,6 +286,7 @@
     flex: 1;
     min-width: 0;
     min-height: 48px;
+    padding: 6px 0;
     cursor: pointer;
     user-select: none;
   }
@@ -484,6 +498,9 @@ document.getElementById("nextMonth").addEventListener("click", () => moveMonth(1
 // 날짜별 루틴 화면: 오늘 화면과 달력에서 연 날짜 화면이 같은 코드를 씀
 let memoTimer = null;
 
+// 펼쳐 둔 루틴. 앱을 다시 열면 전부 접힌 상태로 시작하도록 저장하지 않음
+const expandedRoutines = new Set();
+
 function renderDayView(root, dateKey) {
   root.innerHTML = "";
 
@@ -579,8 +596,11 @@ function renderDayView(root, dateKey) {
     // 세부 루틴: 루틴과 같은 규칙으로 오늘 화면에서 고친 내용만 다음 날로 이어짐
     const subList = document.createElement("div");
     subList.className = "sub-list";
-    getSubs(dateKey, item).forEach((sub) => {
+    const subs = getSubs(dateKey, item);
+    let subDoneCount = 0;
+    subs.forEach((sub) => {
       const subChecked = !!(data[dateKey] && data[dateKey].subs && data[dateKey].subs[item][sub]);
+      if (subChecked) subDoneCount++;
       const subRow = document.createElement("div");
       subRow.className = "sub-item" + (subChecked ? " done" : "");
 
@@ -645,6 +665,27 @@ function renderDayView(root, dateKey) {
       root.querySelectorAll(".sub-add input")[routineIndex].focus();
     });
     subList.appendChild(subForm);
+
+    // 펼치기 버튼: 접혀 있어도 세부 루틴 진행 상황이 보이도록 개수를 같이 표시
+    const expandKey = dateKey + "\n" + item;
+    const toggleBtn = document.createElement("button");
+    toggleBtn.type = "button";
+    toggleBtn.className = "sub-toggle";
+    const countText = subs.length > 0 ? subDoneCount + "/" + subs.length + " " : "";
+    function applyExpanded() {
+      const expanded = expandedRoutines.has(expandKey);
+      subList.hidden = !expanded;
+      toggleBtn.textContent = countText + (expanded ? "▴" : "▾");
+      toggleBtn.setAttribute("aria-expanded", String(expanded));
+      toggleBtn.setAttribute("aria-label", item + " 세부 루틴 " + (expanded ? "접기" : "펼치기"));
+    }
+    toggleBtn.addEventListener("click", () => {
+      if (expandedRoutines.has(expandKey)) expandedRoutines.delete(expandKey);
+      else expandedRoutines.add(expandKey);
+      applyExpanded();
+    });
+    applyExpanded();
+    main.insertBefore(toggleBtn, deleteBtn);
 
     row.appendChild(subList);
     list.appendChild(row);
