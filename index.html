@@ -345,6 +345,12 @@ const now = new Date();
 const todayKey = toDateKey(now.getFullYear(), now.getMonth(), now.getDate());
 const data = loadData();
 
+// 없앤 세부 목표 기능의 저장 내용을 기기에서 완전히 지움
+if ("goals" in data) {
+  delete data.goals;
+  saveData();
+}
+
 // 그 날의 루틴 목록 = 그 날 기록의 checks 키. 기록이 없는 날은 기본 루틴을 보여줌
 function getEntry(dateKey) {
   if (!data[dateKey]) {
