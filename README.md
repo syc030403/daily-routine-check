@@ -28,7 +28,15 @@ https://syc030403.github.io/daily-routine-check/
 
 ## 파일 구성
 
-- `index.html` — 마크업/스타일/스크립트 전부 포함된 메인 파일
+- `index.html` — 화면 뼈대
+- `style.css` — 스타일
+- `js/main.js` — 시작점. 화면들을 연결하고 첫 화면을 그림
+- `js/store.js` — 데이터 저장과 루틴/계획 규칙
+- `js/calendar.js` — 달력 화면
+- `js/dayView.js` — 날짜별 루틴/계획 화면
+- `js/sync.js` — 구글 로그인과 Firestore 동기화
+- `js/dates.js` — 날짜 계산
+- `js/config.js` — Firebase 설정
 - `manifest.webmanifest` — 홈 화면 추가(PWA)용 메타데이터
 - `icon.svg` — 홈 화면 아이콘
 
@@ -40,6 +48,8 @@ python3 -m http.server 8000
 ```
 
 브라우저에서 `http://localhost:8000` 접속
+
+ES 모듈을 쓰기 때문에 `index.html`을 파일로 바로 열면 동작하지 않고, 위처럼 서버로 열어야 합니다.
 
 ## 홈 화면에 추가하기
 
