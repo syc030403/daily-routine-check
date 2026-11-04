@@ -321,6 +321,24 @@ button { font-family: inherit; color: inherit; }
   color: var(--sub-text);
 }
 
+/* 오늘의 문구 */
+.quote {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent);
+}
+.quote blockquote {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.quote figcaption {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--sub-text);
+}
+
 /* 로그인/동기화 상태 */
 .account-bar {
   display: flex;

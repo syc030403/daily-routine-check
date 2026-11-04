@@ -16,6 +16,7 @@ https://syc030403.github.io/daily-routine-check/
 - 루틴마다 세부 루틴을 여러 개 추가하고 따로 체크, 버튼으로 접기/펼치기 (세부 루틴을 모두 체크하면 루틴도 자동으로 체크, 달력의 완료 개수는 상위 루틴만 셈)
 - 지난 날짜에서 고친 루틴과, 오늘이 아닌 날짜에서 고친 세부 루틴은 그 날에만 적용
 - 달력의 완료 개수는 루틴만 세고, 남은 계획은 따로 표시
+- 달력 아래에 오늘의 철학 문구 표시 (날짜별로 정해지고 기기마다 같음)
 - 체크/메모 자동 저장
 - 구글 로그인으로 기기 간 동기화 (선택, 로그인 전 기록은 첫 로그인 때 계정으로 옮겨짐)
 
@@ -35,6 +36,8 @@ https://syc030403.github.io/daily-routine-check/
 - `js/calendar.js` — 달력 화면
 - `js/dayView.js` — 날짜별 루틴/계획 화면
 - `js/sync.js` — 구글 로그인과 Firestore 동기화
+- `data/quotes.json` — 오늘의 문구 목록 (문구는 이 파일만 고치면 됨)
+- `js/quotes.js` — 문구 파일을 읽어 오늘의 문구를 고름
 - `js/dates.js` — 날짜 계산
 - `js/config.js` — Firebase 설정
 - `manifest.webmanifest` — 홈 화면 추가(PWA)용 메타데이터

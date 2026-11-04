@@ -3,6 +3,7 @@ import { todayKey } from "./dates.js";
 import { renderCalendar, setDateSelectHandler } from "./calendar.js";
 import { renderDayView } from "./dayView.js";
 import { initSync } from "./sync.js";
+import { showQuoteOfTheDay } from "./quotes.js";
 
 // 달력에서 오늘이 아닌 날짜를 눌렀을 때 뜨는 화면
 const dayDetail = document.getElementById("dayDetail");
@@ -65,3 +66,4 @@ setDateSelectHandler((dateKey) => {
 renderCalendar();
 renderDayView(document.getElementById("todayView"), todayKey);
 initSync(renderAll);
+showQuoteOfTheDay(todayKey);
