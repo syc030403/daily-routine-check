@@ -10,7 +10,8 @@ import {
   getSubs,
   laterEntryKeys,
   removeRoutine,
-  saveData
+  saveData,
+  syncRoutineCheck
 } from "./store.js";
 
 let memoTimer = null;
@@ -131,6 +132,7 @@ export function renderDayView(root, dateKey) {
       subInput.checked = subChecked;
       subInput.addEventListener("change", () => {
         getEntry(dateKey).subs[item][sub] = subInput.checked;
+        syncRoutineCheck(dateKey, item);
         refresh();
       });
       const subSpan = document.createElement("span");
@@ -152,6 +154,7 @@ export function renderDayView(root, dateKey) {
             if (data[key].subs && data[key].subs[item]) delete data[key].subs[item][sub];
           });
         }
+        syncRoutineCheck(dateKey, item);
         refresh();
       });
 
@@ -187,6 +190,7 @@ export function renderDayView(root, dateKey) {
           if (data[key].subs && data[key].subs[item]) data[key].subs[item][name] = false;
         });
       }
+      syncRoutineCheck(dateKey, item);
       refresh();
       root.querySelectorAll(".sub-add input")[routineIndex].focus();
     });

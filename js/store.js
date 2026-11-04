@@ -73,6 +73,13 @@ export function getEntry(dateKey) {
   return data[dateKey];
 }
 
+// 세부 루틴이 있으면 전부 끝났을 때만 루틴도 완료로 봄. 세부 루틴을 고칠 때마다 맞춤
+export function syncRoutineCheck(dateKey, item) {
+  const entry = getEntry(dateKey);
+  const subDone = Object.values(entry.subs[item] || {});
+  if (subDone.length > 0) entry.checks[item] = subDone.every(Boolean);
+}
+
 export function getRoutines(dateKey) {
   if (data[dateKey]) return Object.keys(data[dateKey].checks || {});
   return data.items.filter((item) => isRoutineActive(item, dateKey));
