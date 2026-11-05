@@ -80,6 +80,14 @@ export function syncRoutineCheck(dateKey, item) {
   if (subDone.length > 0) entry.checks[item] = subDone.every(Boolean);
 }
 
+// 루틴을 직접 체크하거나 풀면 세부 루틴도 전부 같이 맞춤. 위 규칙과 어긋나는 상태가 생기지 않게 함
+export function setRoutineCheck(dateKey, item, checked) {
+  const entry = getEntry(dateKey);
+  entry.checks[item] = checked;
+  const subs = entry.subs[item] || {};
+  Object.keys(subs).forEach((sub) => { subs[sub] = checked; });
+}
+
 export function getRoutines(dateKey) {
   if (data[dateKey]) return Object.keys(data[dateKey].checks || {});
   return data.items.filter((item) => isRoutineActive(item, dateKey));

@@ -11,6 +11,7 @@ import {
   laterEntryKeys,
   removeRoutine,
   saveData,
+  setRoutineCheck,
   syncRoutineCheck
 } from "./store.js";
 
@@ -91,7 +92,7 @@ export function renderDayView(root, dateKey) {
     input.type = "checkbox";
     input.checked = checked;
     input.addEventListener("change", () => {
-      getEntry(dateKey).checks[item] = input.checked;
+      setRoutineCheck(dateKey, item, input.checked);
       refresh();
     });
     const span = document.createElement("span");
